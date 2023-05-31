@@ -56,6 +56,7 @@ function RemoveLastNElements($n, $arr) {
 }
 
 class Game {
+    static [Planet] $currentPlanet
     static [Ship] $ship = [Ship]::new()
     static [boolean] $colonized = 0
     static start() {
@@ -152,7 +153,15 @@ class Menu {
          .. . ./'     -hrr-
         ."
         Write-host "`n`n`nYou finally found a planet for humanity to call home.`nThe ship touches down, and the colonists wake from their hibernation chambers to explore their new world.`n`n`n`n`n`n`n`n`n"
-       
+       if ([Game]::CurrentPlanet.Habitability() -le 25) {
+         Write-host "This planet is extremely inhospitable though. The young colony cannot cope and quickly succumbs to the hazardous environment."
+       } elseif([Game]::CurrentPlanet.Habitability() -le 50) {
+       	 Write-host "This planet is rather inhospitable though. The young colony is tenacious, but eventually succumbs to the hazardous envrionment."
+       } elseif([Game]::CurrentPlanet.Habitability() -le 75) {
+         Write-host "This planet is almost comfortable. It is not as hospitable as Earth was, but it will sustain the colony."
+       } else {
+         Write-host "This planet is a new paradise. Our colonists will be happy here."
+       }
     }
     static UpgradeOpportunity() {
         [Menu]::ShipStatus()
