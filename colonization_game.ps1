@@ -3,10 +3,10 @@
 #  through space to find a planet to colonize.
 #  
 #  Team member names:
-#    Jeremy Albin
-#    Brian Willis
-#    Kain Sparks
-#    Will Flowers
+#    Jeremy Albin - Lead Developer
+#    Brian Willis - Assistant to the Lead Developer
+#    Kain Sparks - Consultant
+#    Will Flowers - Development QA
 #
 #  
 #  
@@ -60,10 +60,11 @@ class Game {
     static [boolean] $colonized = 0
     static start() {
         Clear-host
-        $name = Read-Host "What is your Name?"
+        #User input to customize experience - Willis
+	$name = Read-Host "What is your Name?"
 
         Write-host "Greetings Captain $Name, Welcome to the UNSC Forward unto Dawn"
-        #Intro Narrative
+        #Intro Narrative - Willis
         Write-host "We have 100 colonists and are preparing to embark forward on one of Mankind's greatest adventures.  We are setting sail into the stars to develop new colonies for earth."
 
         [Encounter]::InitEncounters()
@@ -76,8 +77,8 @@ class Game {
                                                          
                                                          "
         Write-host "`n==================== WELCOME ======================"
-        Write-host "`nYou are an AI pilot aboard a state-of-the-art starship on a historical mission. Set in a future where humanity has vanished from Earth, the fate of the last remnants of our species rests solely in your virtual hands."
-        Write-host "`nAs the AI pilot, you are entrusted with the daunting task of scouring the vast expanse of space to seek out a new home for the colonists aboard your starship. These brave souls are the last surviving humans, floating through the void, their hopes clinging to your guidance and expertise."
+        Write-host "`nYou are aboard a state-of-the-art starship on a historical mission. Set in a future where humanity has vanished from Earth, the fate of the last remnants of our species rests solely in your virtual hands."
+        Write-host "`nYou are entrusted with the daunting task of scouring the vast expanse of space to seek out a new home for the colonists aboard your starship. These brave souls are the last surviving humans, floating through the void, their hopes clinging to your guidance and expertise."
         Write-host "`nEquipped with a sub-light speed starship, you travel the void for millenia, visiting various planets in search of the perfect candidate for colonization. Will you find a hospitable and bountiful planet that can sustain life?"
         Write-host "`nPress enter to begin..."
         Read-host
@@ -158,12 +159,14 @@ class Menu {
         Write-host "================ UPGRADE OPPORTUNITY ================`n"
         Write-host "You have learned a lot from traveling the stars. You can choose to upgrade one of your scanners to help you detect higher quality planets from a distance."
         Write-host "`nWhich scanner would you like to upgrade?"        
-        for ($i = 0; $i -lt [Game]::ship.Scanners.Count; $i++) {
+        #For Function - Flowers
+	for ($i = 0; $i -lt [Game]::ship.Scanners.Count; $i++) {
             $scanner = [Game]::ship.Scanners[$i]
             Write-Host "$($i + 1)) $($scanner.Name)"
         }
         $upgradeChoice = Read-host "`nEnter a number"
-        switch($upgradeChoice) {
+        #Switch Function -Willis
+	switch($upgradeChoice) {
             1 {[Game]::ship.WaterScanner.Upgrade()}
             2 {[Game]::ship.AtmosphereScanner.Upgrade()}
             3 {[Game]::ship.GravityScanner.Upgrade()}
@@ -174,13 +177,13 @@ class Menu {
     static UpgradeResults() {
         [Menu]::ShipStatus()
         Write-host "================= SCANNER UPGRADED ==================`n"
-        Write-host "You upgraded your scanner! You will find higher quality planets more often."
-        Write-host "`nPress enter to continue your journey..."
+        Write-host "You upgraded your scanner! This will help you find higher quality planets more often."
+        Write-host "`nPress enter to return to your hibernation pod and continue your journey..."
         Read-host
     }
     static [string] ArriveAndScanMessage() {
-        $message = "You travel for hundreds of years through deep space. All that is left of humanity is within your ship.`n`n"
-        $message += "You carefully burn to a stable orbit around the "
+        $message = "You travel for hundreds of years through deep space. All that is left of humanity is within your ship. `n`n"
+        $message += "Your ship awakens you from hibernation as you approach a stable orbit around the "
         $planet_num = Get-Random -Minimum 1 -Maximum 5
         $message += ConvertToOrdinal($planet_num)
         if ((Get-Random -Minimum 0 -Maximum 2) % 2 -eq 0) {
@@ -292,7 +295,7 @@ class Choice {
         }
     }
     ExecuteBad() {
-        [Game]::ship.colonists -= Get-Random -Minimum 1 -Maximum 10
+        [Game]::ship.colonists -= Get-Random -Minimum 5 -Maximum 20
     }
 
     ExecuteGood() {
@@ -419,7 +422,7 @@ function playGame {
         exit
     }
 }
-
+#Planet Identification ifeslseif function with Randomizer to generate different planet names -Willis
 function BriansMessage($planet_num) {
     $Planet = Random(1..20)
 
@@ -446,6 +449,8 @@ function BriansMessage($planet_num) {
 
     return "`nCongratulations Captain $Name, you've reached $PlanetName $planet_num"
 }
+
+# Fix to Scanner failures - if else function
 function BriansFix {
     $Scanners = 0
 
@@ -456,20 +461,20 @@ function BriansFix {
     $Temperature
 
     If ($scanners + $Water -ge 15) {$OutputW = “Water is Plentiful”)
-	    Elseif ($scanners +$water [5..14]) {$OutputW = “Water is Acceptable”}
+	  Elseif ($scanners +$water [5..14]) {$OutputW = “Water is Acceptable”}
           Elseif ($scanners +$water -lt 5) {$OutputW = “No Water is Present”} 
     if ($scanners +$Gravity + $scanners -gt 10) {$OutputG = “Gravity is in Acceptable Tolerance”} 
-    Elseif ($scanners +$Gravity 5..9) {$OutputG = “Gravity is Crushing”} 
-    Elseif ($scanners +$Gravity -lt 5) {$OutputG = “Gravity is too Light”} 
+    	Elseif ($scanners +$Gravity 5..9) {$OutputG = “Gravity is Crushing”} 
+    	Elseif ($scanners +$Gravity -lt 5) {$OutputG = “Gravity is too Light”} 
     if ($scanners +$Resources -gt 15) {$OutputR = “Resources are Abundant”} 
-    Elseif ($Resources +$Gravity 5..15) {$OutputR = “Resources are Sparse”} 
-    Elseif ($Resources +$water -lt 5) {$OutputR = “No Readily Accessible Resources”} 
+    	Elseif ($Resources +$Gravity 5..15) {$OutputR = “Resources are Sparse”} 
+   	 Elseif ($Resources +$water -lt 5) {$OutputR = “No Readily Accessible Resources”} 
     if ($scanners +$Atmosphere-gt 15) {$OutputA = “Breathable Atmosphere”} 
-    Elseif ($Atmosphere +$Gravity 5..15) {$OutputA = “Atmosphere is Thin”} 
-    Elseif ($Atmosphere +$water -lt 5) {$OutputA = “Atmosphere is Toxic”} 
+   	 Elseif ($Atmosphere +$Gravity 5..15) {$OutputA = “Atmosphere is Thin”} 
+   	 Elseif ($Atmosphere +$water -lt 5) {$OutputA = “Atmosphere is Toxic”} 
     if ($scanners +$Temperature -gt 15) {$OutputT = “Sunny and 75”} 
-    Elseif ($scanners +$Temperature 5..15) {$OutputT = “Ice Planet”} 
-    Elseif ($scanners +$Temperature -lt 5) {$OutputT = “Rivers of Lava are cutting through the planet”} 
+   	 Elseif ($scanners +$Temperature 5..15) {$OutputT = “Ice Planet”} 
+   	 Elseif ($scanners +$Temperature -lt 5) {$OutputT = “Rivers of Lava are cutting through the planet”} 
 
     “Scanner Results:
      $OutputW
