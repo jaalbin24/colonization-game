@@ -1,4 +1,5 @@
-﻿#================================================================================
+#===================================================================================
+#
 #  This is a game called Colonization wherein the player controls a ship navigating
 #  through space to find a planet to colonize.
 #  
@@ -7,14 +8,8 @@
 #    Brian Willis - Assistant to the Lead Developer
 #    Kain Sparks - Consultant
 #    Will Flowers - Development QA
-#
 #  
-#  
-#================================================================================
-
-
-
-
+#===================================================================================
 
 # Used to convert an integer to a string ordinal. For example, 1 => '1st'
 function ConvertToOrdinal([int]$number) {
@@ -48,11 +43,9 @@ function Get-RandomValueFromArray($array) {
 # This function is used for determining planet ratings with upgraded scanners
 function RemoveLastNElements($n, $arr) {
     if ($n -ge $arr.Count) {
-        return @()
+        return @($arr[0])
     }
-
-    $newArr = $arr[0..($arr.Count - $n - 1)]
-    return $newArr
+    return $arr[0..($arr.Count - $n - 1)]
 }
 
 class Game {
@@ -83,6 +76,9 @@ class Game {
         Write-host "`nEquipped with a sub-light speed starship, you travel the void for millenia, visiting various planets in search of the perfect candidate for colonization. Will you find a hospitable and bountiful planet that can sustain life?"
         Write-host "`nPress enter to begin..."
         Read-host
+# This while loop controls the high-level flow of the game.
+#===============================================================
+        # Flowers
         while ([Game]::colonized -eq 0) {
             [Menu]::ArriveAndScan()
             [Menu]::ScanResults()
@@ -94,9 +90,12 @@ class Game {
                 [Menu]::Colonization()
             }
         }
+#===============================================================
     }
 }
 
+
+# The Menu class handles rendering and UI styling. There's no game major logic being performed here.
 class Menu {
     static ShipStatus() {
         Clear-host
@@ -115,9 +114,10 @@ class Menu {
     static ScanResults() {
         [Menu]::ShipStatus()
         $planet = [Planet]::new()
+        [Game]::CurrentPlanet = $planet
         Write-host "==================== SCAN RESULTS ===================`n"
         Write-host "The data slowly comes back from your scanners. You wait anxiously until, at last, the report is finally ready."
-        $table = $planet.Ratings | Format-Table -AutoSize | Out-String
+        $table = $planet.Ratings | Format-Table | Out-String
         Write-host $table
         Write-host "What do you want to do?"
         Write-host "1) Colonize this planet"
@@ -153,15 +153,16 @@ class Menu {
          .. . ./'     -hrr-
         ."
         Write-host "`n`n`nYou finally found a planet for humanity to call home.`nThe ship touches down, and the colonists wake from their hibernation chambers to explore their new world.`n`n`n`n`n`n`n`n`n"
-       if ([Game]::CurrentPlanet.Habitability() -le 25) {
-         Write-host "This planet is extremely inhospitable though. The young colony cannot cope and quickly succumbs to the hazardous environment."
-       } elseif([Game]::CurrentPlanet.Habitability() -le 50) {
-       	 Write-host "This planet is rather inhospitable though. The young colony is tenacious, but eventually succumbs to the hazardous envrionment."
-       } elseif([Game]::CurrentPlanet.Habitability() -le 75) {
-         Write-host "This planet is almost comfortable. It is not as hospitable as Earth was, but it will sustain the colony."
-       } else {
-         Write-host "This planet is a new paradise. Our colonists will be happy here."
-       }
+
+        $a = [Game]::CurrentPlanet.RatingsToString()[0]
+        $b = [Game]::CurrentPlanet.RatingsToString()[1]
+        $c = [Game]::CurrentPlanet.RatingsToString()[2]
+        $d = [Game]::CurrentPlanet.RatingsToString()[3]
+        $e = [Game]::CurrentPlanet.RatingsToString()[4]
+
+
+        Write-host "$(CheckSurvivalStatus($a, $b, $c, $d, $e))"
+
     }
     static UpgradeOpportunity() {
         [Menu]::ShipStatus()
@@ -257,6 +258,8 @@ class Menu {
         Read-host
     }
 }
+
+# The Encounter class represents challenges the ship (the player) can encounter
 class Encounter {
     static [Encounter[]] $Encounters
     [string] $Context
@@ -279,6 +282,7 @@ class Encounter {
         $this.Choices = $choices
     }
 }
+# The Choice class represents the choice a user makes at an encounter. Each encounter has one or more choices.
 class Choice {
     [int] $Id
     [string] $Description
@@ -297,10 +301,10 @@ class Choice {
             return
         } elseif ((Get-Random) % 2 -eq 0) {
             $this.ExecuteGood()
-            $this.Outcome = "You have learned from your decision and upgraded a scanner."
+            $this.Outcome = "The survivors are grateful to make contact and gratefully accept a supply drop you jettisoned from orbit. As a thanks, they transmit schematics for a scanner that should work better than the one you currently use.`n"
         } else {
             $this.ExecuteBad()
-            $this.Outcome = "That decsision has caused some colonists to die."
+            $this.Outcome = "It was a trap! The survivors were acting as bait for a nearby fleet of pirate ships who boarded your ship and stole some of the sleeping colonists.`n"
         }
     }
     ExecuteBad() {
@@ -315,17 +319,26 @@ class Choice {
             4 { [Game]::ship.TemperatureScanner.Upgrade() }
             5 { [Game]::ship.ResourceScanner.Upgrade() }
         }
-        #Get-RandomValueFromArray([Game]::ship.Scanners).Upgrade()
     }
 }
+# The Planet class is self-explanatory
 class Planet {
     [PlanetRating[]] $Ratings
+
+    [array] RatingsToString() {
+        $arr = @()
+        ForEach($planetRating in $this.Ratings) {
+            $arr += $planetRating.Rating
+        }
+        return $arr
+    }
     Planet() {
         ForEach($trait in "Water", "Temperature", "Gravity", "Atmosphere", "Resources") {
             $this.Ratings += [PlanetRating]::new($trait)
         }
     }
 }
+#The PlanetRating class represents an aspect of a Planet such as water level, atmosphere content, etc.
 class PlanetRating {
     [string] $Trait
     [string] $Rating
@@ -374,14 +387,9 @@ class PlanetRating {
             "Temperature" { $this.Rating = Get-RandomValueFromArray(RemoveLastNElements([Game]::ship.TemperatureScanner.Level) @([PlanetRating]::TemperatureRatings)) }
             default { $this.Rating = "DEFAULT" }
         }
-        "$($this.Trait): $($this.Rating)" >> "C:\Users\god\Downloads\colonization_game.txt"
     }
 }
-
-
-# Use a for-loop to do Xyz
-
-
+# The Ship class represents the player. It has scanners for different attributes of each planet.
 class Ship {
     [ShipScanner[]] $Scanners
     [ShipScanner] $WaterScanner
@@ -404,8 +412,7 @@ class Ship {
         $this.colonists = 100
     }
 }
-
-
+# The ShipScanner class represents a scanner system within the ship. These scanners can be leveled up in encounters or naturally over time.
 class ShipScanner {
     [int] $Level
     [string] $Name
@@ -469,41 +476,58 @@ function BriansFix {
     $Resources
     $Temperature
 
-    If ($scanners + $Water -ge 15) {$OutputW = “Water is Plentiful”)
-	  Elseif ($scanners +$water [5..14]) {$OutputW = “Water is Acceptable”}
-          Elseif ($scanners +$water -lt 5) {$OutputW = “No Water is Present”} 
-    if ($scanners +$Gravity + $scanners -gt 10) {$OutputG = “Gravity is in Acceptable Tolerance”} 
-    	Elseif ($scanners +$Gravity 5..9) {$OutputG = “Gravity is Crushing”} 
-    	Elseif ($scanners +$Gravity -lt 5) {$OutputG = “Gravity is too Light”} 
-    if ($scanners +$Resources -gt 15) {$OutputR = “Resources are Abundant”} 
-    	Elseif ($Resources +$Gravity 5..15) {$OutputR = “Resources are Sparse”} 
-   	 Elseif ($Resources +$water -lt 5) {$OutputR = “No Readily Accessible Resources”} 
-    if ($scanners +$Atmosphere-gt 15) {$OutputA = “Breathable Atmosphere”} 
-   	 Elseif ($Atmosphere +$Gravity 5..15) {$OutputA = “Atmosphere is Thin”} 
-   	 Elseif ($Atmosphere +$water -lt 5) {$OutputA = “Atmosphere is Toxic”} 
-    if ($scanners +$Temperature -gt 15) {$OutputT = “Sunny and 75”} 
-   	 Elseif ($scanners +$Temperature 5..15) {$OutputT = “Ice Planet”} 
-   	 Elseif ($scanners +$Temperature -lt 5) {$OutputT = “Rivers of Lava are cutting through the planet”} 
+    if ($scanners + $Water -ge 15) {$OutputW = "Water is Plentiful"}
+	elseif ($scanners + $water -ge 5) {$OutputW = "Water is Acceptable"}
+    elseif ($scanners +$water -lt 5) {$OutputW = "No Water is Present"} 
+    if ($scanners +$Gravity + $scanners -gt 10) {$OutputG = "Gravity is in Acceptable Tolerance"} 
+    elseif ($scanners +$Gravity -ge 5) {$OutputG = "Gravity is Crushing"} 
+    elseif ($scanners +$Gravity -lt 5) {$OutputG = "Gravity is too Light"} 
+    if ($scanners +$Resources -gt 15) {$OutputR = "Resources are Abundant"} 
+    elseif ($Resources +$Gravity -ge 5) {$OutputR = "Resources are Sparse"} 
+   	elseif ($Resources +$water -lt 5) {$OutputR = "No Readily Accessible Resources"} 
+    if ($scanners +$Atmosphere -gt 15) {$OutputA = "Breathable Atmosphere"} 
+   	elseif ($Atmosphere +$Gravity -ge 5) {$OutputA = "Atmosphere is Thin"} 
+   	elseif ($Atmosphere +$water -lt 5) {$OutputA = "Atmosphere is Toxic"} 
+    if ($scanners +$Temperature -gt 15) {$OutputT = "Sunny and 75"} 
+   	elseif ($scanners + $Temperature -ge 5) {$OutputT = "Ice Planet"} 
+   	elseif ($scanners + $Temperature -lt 5) {$OutputT = "Rivers of Lava are cutting through the planet"} 
 
-    “Scanner Results:
-     $OutputW
-     $OutputG
-     $OutputR
-     $OutputA
-     $OutputT
+    "Scanner Results:"
+     Write-host $OutputW
+     Write-host $OutputG
+     Write-host $OutputR
+     Write-host $OutputA
+     Write-host $OutputT
+}
+# Will Flowers
+function CheckSurvivalStatus ([string]$Water, [string]$Temperature, [string]$Gravity, [string]$Atmosphere,  [string]$Resource) {
+    
+    if (@("Toxic", "Non-breathable", "Corrosive", "None") -contains $Atmosphere) {
+        return "This planet is extremely inhospitable. Everyone dies"
+    }
 
+    if (@("Trace", "None") -contains $Water) {
+        return "This planet is extremely inhospitable. Everyone dies"
+    }
 
+    if (@("Ice-covered surface", "Planet-wide ocean") -contains $Water) {
+        return "This planet is somewhat inhospitable. Many people die"
+    }
+
+    if (@("Very cold", "Very hot") -contains $Temperature) {
+        return "This planet is somewhat inhospitable. Many people die"
+    }
+    
+    if ("Marginal" -eq $Atmosphere) {
+        return "This planet is not the most habitable. Some people die"
+    }
+
+    if (@("Hot", "Cold") -contains $Temperature) {
+        return "This planet is not the most habitable. Some people die"
+    }
 }
 
-#$ship = [Ship]::new()
-#$ship.WaterScanner.Level += 1
 
-
-#Write-host (RemoveLastNElements ($ship.WaterScanner.Level) @([PlanetRating]::WaterRatings))
+# Code execution starts here
 cls
-#[Game]::start()
-[Game]::ship.GravityScanner.Level = 4
-Write-host "LEVEL: $([Game]::ship.GravityScanner.Level)"
-for ([int] $i = 0; $i -lt 30; $i++) {
-    [PlanetRating]::new("Gravity")
-}
+[Game]::start()
